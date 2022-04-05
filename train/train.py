@@ -7,7 +7,6 @@
 import argparse
 import random
 import shutil
-import time
 from tqdm import tqdm
 
 import torch
@@ -20,7 +19,7 @@ import torch.utils.data.distributed
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from model import ResNet18
-from data_provider import train_dataset, val_dataset
+from data.data_provider import train_dataset, val_dataset
 
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 # 训练配置
@@ -75,31 +74,7 @@ def main():
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum)
     lr_scheduler = CosineAnnealingLR(optimizer=optimizer, T_max=args.epochs)
 
-    # # optionally resume from a checkpoint
-    # if args.resume:
-    #     if os.path.isfile(args.resume):
-    #         print("=> loading checkpoint '{}'".format(args.resume))
-    #         if args.gpu is None:
-    #             checkpoint = torch.load(args.resume)
-    #         else:
-    #             # Map model to be loaded to specified single gpu.
-    #             loc = 'cuda:{}'.format(args.gpu)
-    #             checkpoint = torch.load(args.resume, map_location=loc)
-    #         args.start_epoch = checkpoint['epoch']
-    #         best_acc1 = checkpoint['best_acc1']
-    #         if args.gpu is not None:
-    #             # best_acc1 may be from a checkpoint from a different GPU
-    #             best_acc1 = best_acc1.to(args.gpu)
-    #         model.load_state_dict(checkpoint['state_dict'])
-    #         optimizer.load_state_dict(checkpoint['optimizer'])
-    #         lr_scheduler.load_state_dict(checkpoint['scheduler'])
-    #         print("=> loaded checkpoint '{}' (epoch {})"
-    #               .format(args.resume, checkpoint['epoch']))
-    #     else:
-    #         print("=> no checkpoint found at '{}'".format(args.resume))
-
-    # cudnn.benchmark = True
-
+    # 开始训练
     for epoch in range(args.start_epoch, args.epochs):
         print("正在进行第{}个epoch".format(epoch))
         # train for one epoch
@@ -107,7 +82,7 @@ def main():
         # evaluate on validation set
         validate(val_loader, model, criterion, device)
         # remember best acc@1 and save checkpoint
-        torch.save(model.state_dict(), "pth/{}.pth".format(epoch))
+        torch.save(model.state_dict(), "../data/pth/{}.pth".format(epoch))
 
 
 def train(train_loader, model, criterion, optimizer, lr_scheduler, device):
@@ -166,13 +141,6 @@ def validate(val_loader, model, criterion, device):
         avg_acc /= i
         # 打印输出
         print("验证结果： avg_loss:", avg_loss, "avg_acc:", avg_acc)
-
-
-def save_checkpoint(state, is_best, filename='repvgg_model_best.pth.tar'):
-    torch.save(state, filename)
-    if is_best:
-        # shutil.copyfile(filename, 'resnet18_model_best.pth.tar')
-        shutil.copyfile(filename, 'model_best.pth.tar')
 
 
 if __name__ == '__main__':
